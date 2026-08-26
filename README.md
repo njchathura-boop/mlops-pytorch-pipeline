@@ -104,6 +104,16 @@ The manifests use the `ml-training` namespace, a ConfigMap for the training conf
 
 Build and make the images available to your cluster before applying the manifests. The image names in `k8s/training-job.yaml` and `k8s/serving-deployment.yaml` must match images that the cluster can pull.
 
+For Minikube with the Docker runtime, build the CPU images directly in Minikube's Docker daemon. This avoids transferring large PyTorch image archives with `minikube image load`:
+
+```bash
+eval "$(minikube docker-env)"
+docker build -f docker/Dockerfile.train -t chathuranj/mlops-train:v1 .
+docker build -f docker/Dockerfile.serve -t chathuranj/mlops-serve:v1 .
+docker image ls | grep -E 'mlops-train|mlops-serve'
+eval "$(minikube docker-env -u)"
+```
+
 ```powershell
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/pvc.yaml
