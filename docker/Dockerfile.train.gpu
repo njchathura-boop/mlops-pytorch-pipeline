@@ -1,0 +1,29 @@
+# Stage 1: install pinned CUDA-enabled training dependencies
+FROM python:3.11-slim AS builder
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+COPY requirements/train-gpu.txt /tmp/train-gpu.txt
+RUN python -m pip install --prefix=/install -r /tmp/train-gpu.txt
+
+# Stage 2: GPU training runtime
+FROM python:3.11-slim AS training
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    TRAINING_CONFIG_PATH=/app/configs/training_config.yaml
+
+WORKDIR /app
+COPY --from=builder /install /usr/local
+COPY src/ ./src/
+COPY configs/ ./configs/
+
+RUN useradd --create-home --uid 10001 mluser \
+    && mkdir -p /app/data /app/checkpoints \
+    && chown -R mluser:mluser /app
+
+USER mluser
+ENTRYPOINT ["python", "-m", "src.train"]

@@ -225,6 +225,9 @@ checkpoints/
 *.pt
 *.pth
 
+# Local installer packages
+*.deb
+
 # Python environment
 .venv/
 venv/
